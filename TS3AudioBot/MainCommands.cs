@@ -675,7 +675,7 @@ namespace TS3AudioBot
 			if (curList?.Items.Count > 0)
 			{
 				tmb.Append("From playlist ").Append(curList.Name.Mod().Bold()).Append(":\n");
-				
+
 				for (; plIndex <= plUpper; plIndex++)
 				{
 					var line = CurLine();
@@ -1615,17 +1615,32 @@ namespace TS3AudioBot
 			if (!invoker.Visibiliy.HasValue || !invoker.ClientId.HasValue)
 				return new LocalStr(strings.error_invoker_not_visible);
 
-			switch (invoker.Visibiliy.Value)
+			var behaviour = LongTextBehaviour.Trim;
+			if (info.TryGet<ConfBot>(out var config))
+				behaviour = config.Commands.LongMessage;
+
+			foreach (var msgPart in LongTextTransform.Transform(message, behaviour))
 			{
-			case TextMessageTargetMode.Private:
-				return ts3Client.SendMessage(message, invoker.ClientId.Value);
-			case TextMessageTargetMode.Channel:
-				return ts3Client.SendChannelMessage(message);
-			case TextMessageTargetMode.Server:
-				return ts3Client.SendServerMessage(message);
-			default:
-				throw Util.UnhandledDefault(invoker.Visibiliy.Value);
+				E<LocalStr> result;
+				switch (invoker.Visibiliy.Value)
+				{
+				case TextMessageTargetMode.Private:
+					result = ts3Client.SendMessage(msgPart, invoker.ClientId.Value);
+					break;
+				case TextMessageTargetMode.Channel:
+					result = ts3Client.SendChannelMessage(msgPart);
+					break;
+				case TextMessageTargetMode.Server:
+					result = ts3Client.SendServerMessage(msgPart);
+					break;
+				default:
+					throw Util.UnhandledDefault(invoker.Visibiliy.Value);
+				}
+
+				if (!result.Ok)
+					return result;
 			}
+			return R.Ok;
 		}
 	}
 }
