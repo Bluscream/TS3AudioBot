@@ -1,6 +1,4 @@
 ---
-name: Bug report (Automatic)
-about: Create a report to help us improve
 
 ---
 
