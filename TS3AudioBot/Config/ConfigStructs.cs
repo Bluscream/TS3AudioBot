@@ -141,11 +141,12 @@ namespace TS3AudioBot.Config
 			" - substring : The shortest command starting with the given prefix.\n" +
 			" - ic3 : 'interleaved continuous character chain' A fuzzy algorithm similar to hamming distance but preferring characters at the start."
 			/* "hamming : " */);
-		public ConfigValue<LongTextBehaviour> LongMessage { get; } = new ConfigValue<LongTextBehaviour>("long_message", LongTextBehaviour.Trim,
+		public ConfigValue<LongTextBehaviour> LongMessage { get; } = new ConfigValue<LongTextBehaviour>("long_message", LongTextBehaviour.Split,
 			"Defines how the bot handles messages which are too long for a single ts3 message. Options are:\n" +
-			" - trim : The message will be trimmed at the ts3 limit.\n" +
 			" - split : The message will be split up into multiple messages.\n" +
 			" - drop : Does not send the message.");
+		public ConfigValue<int> LongMessageSplitLimit { get; } = new ConfigValue<int>("long_message_split_limit", 1,
+			"Limits the split count for long messages. When for example set to 1 the message will simply be trimmed to one message.");
 		public ConfigValue<bool> Color { get; } = new ConfigValue<bool>("color", true,
 			"Enables colors and text highlights for respones.");
 	}

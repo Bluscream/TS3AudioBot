@@ -15,12 +15,13 @@ namespace TS3AudioBot.CommandSystem.Text
 
 	public static class LongTextTransform
 	{
-		public static IEnumerable<string> Transform(string text, LongTextBehaviour behaviour)
+		private static readonly char[] SeparatorWeight = new char[] { '\n', ',', ' ' };
+
+		public static IEnumerable<string> Transform(string text, LongTextBehaviour behaviour, int limit = int.MaxValue)
 		{
 			switch (behaviour)
 			{
 			case LongTextBehaviour.Drop:
-			case LongTextBehaviour.Trim:
 			case LongTextBehaviour.SplitHard:
 				int tokenCnt = 0;
 				int lastSplit = 0;
@@ -33,20 +34,21 @@ namespace TS3AudioBot.CommandSystem.Text
 						if (behaviour == LongTextBehaviour.Drop)
 							yield break;
 						yield return text.Substring(lastSplit, i - lastSplit);
-						if (behaviour == LongTextBehaviour.Trim)
+						limit--;
+						if (limit == 0)
 							yield break;
 						lastSplit = i;
 						tokenCnt -= prevTokenCnt;
 					}
 				}
-				yield return text;
+				yield return text.Substring(lastSplit);
 				break;
 
 			case LongTextBehaviour.Split:
 				tokenCnt = 0;
 				lastSplit = 0;
-				int lastLineBreak = 0;
-				int lastLineBreakTokens = 0;
+				var splitIndices = new (int i, int tok)[SeparatorWeight.Length];
+
 				for (int i = 0; i < text.Length; i++)
 				{
 					var prevTokenCnt = tokenCnt;
@@ -54,26 +56,39 @@ namespace TS3AudioBot.CommandSystem.Text
 
 					if (tokenCnt > Ts3Const.MaxSizeTextMessage) // TODO >= ??
 					{
-						if (lastLineBreak == 0)
+						bool hasSplit = false;
+						for (int j = 0; j < SeparatorWeight.Length; j++)
+						{
+							if (!hasSplit && splitIndices[j].i != 0)
+							{
+								yield return text.Substring(lastSplit, splitIndices[j].i - lastSplit);
+								tokenCnt = 0;
+								lastSplit = splitIndices[j].i;
+								i = lastSplit - 1;
+								hasSplit = true;
+							}
+							splitIndices[j] = (0, 0);
+						}
+
+						if (!hasSplit)
 						{
 							yield return text.Substring(lastSplit, i - lastSplit);
 							tokenCnt -= prevTokenCnt;
 							lastSplit = i;
 						}
-						else
-						{
-							yield return text.Substring(lastSplit, lastLineBreak - lastSplit);
-							tokenCnt -= lastLineBreakTokens;
-							lastSplit = lastLineBreak;
-							lastLineBreak = 0;
-						}
+
+						limit--;
+						if (limit == 0)
+							yield break;
 					}
-					else if (text[i] == '\n')
+					else
 					{
-						lastLineBreak = i;
-						lastLineBreakTokens = tokenCnt;
+						for (int j = 0; j < SeparatorWeight.Length; j++)
+							if (text[i] == SeparatorWeight[j])
+								splitIndices[j] = (i, tokenCnt);
 					}
 				}
+				yield return text.Substring(lastSplit);
 				break;
 
 			default:

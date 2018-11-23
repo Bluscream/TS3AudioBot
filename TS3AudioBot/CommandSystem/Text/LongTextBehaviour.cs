@@ -11,8 +11,6 @@ namespace TS3AudioBot.CommandSystem.Text
 {
 	public enum LongTextBehaviour
 	{
-		/// <summary>Caps the message at the maximum length.</summary>
-		Trim,
 		/// <summary>Splits the message preferably at line breaks.</summary>
 		Split,
 		/// <summary>Splits at exact maxium length per message.</summary>
